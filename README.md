@@ -1,10 +1,10 @@
-# Focused Explorer Lite 0.3.3
+# Focused Explorer Lite 0.3.4
 
 A separate VS Code explorer that keeps your complete Unity workspace (and C# tooling) open.
 
 ## Install
 
-In VS Code, open Extensions (`Ctrl+Shift+X`), open the `...` menu and choose **Install from VSIX...**. Select `focused-explorer-lite-0.3.3.vsix`. If you already installed version 0.1.0, install this file over it and reload the window if necessary.
+In VS Code, open Extensions (`Ctrl+Shift+X`), open the `...` menu and choose **Install from VSIX...**. Select `focused-explorer-lite-0.3.4.vsix`. If you already installed version 0.1.0, install this file over it and reload the window if necessary.
 
 ## Focus and navigate
 
@@ -41,12 +41,11 @@ Use the two new-file/new-folder buttons at the top of the view to create in the 
 
 This is a minimal custom explorer, not a complete clone of the built-in VS Code Explorer. It does not yet offer drag/drop, clipboard operations, file decorations, or native undo for custom rename/delete actions. Deletion requires a supported recycle bin/trash. For safe operation, the extension does not overwrite existing files or directories.
 
-## Version 0.3.3
+## Version 0.3.4
 
-- The view header now shows only `Focus: <folder name>` rather than the full folder path. It disappears when workspace roots are shown.
-
-- Added an explicit **Focus on Folder** entry to folder context menus, while retaining the target icon on folder rows.
-- Added a transparent AI-generation notice to extension metadata and this README.
+- Displays `Focus: <folder name>` as a separate line immediately above the file list, rather than beside the view title. Only the folder name appears, not its full path. The line disappears when viewing workspace roots.
+- Adds **Focus on Folder** to folder context menus while preserving the target icon beside folder rows.
+- Includes an AI-generation disclosure in the extension metadata and this README.
 
 ## About
 
@@ -54,4 +53,3 @@ This is a minimal custom explorer, not a complete clone of the built-in VS Code 
 
 **API limitation:** A blank-area right-click context menu is not supported in VS Code custom Tree Views. Use the toolbar buttons to create when nothing is selected.
 
-Version 0.3.4: Focus: <Ordnername> erscheint als Hinweis direkt oberhalb der Dateiliste, nicht in der Überschrift.
