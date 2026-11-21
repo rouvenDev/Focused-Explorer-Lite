@@ -1,0 +1,197 @@
+{
+  "name": "focused-explorer-lite",
+  "displayName": "Focused Explorer Lite",
+  "description": "Focused file explorer with file filters, context actions and toolbar creation. AI-generated with ChatGPT.",
+  "version": "0.3.4",
+  "publisher": "localtools",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./extension.js",
+  "activationEvents": [
+    "onView:focusedExplorerLite.view",
+    "onCommand:focusedExplorerLite.focus"
+  ],
+  "contributes": {
+    "views": {
+      "explorer": [
+        {
+          "id": "focusedExplorerLite.view",
+          "name": "Focused Explorer Lite",
+          "type": "tree",
+          "visibility": "visible"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "focusedExplorerLite.focus",
+        "title": "Focus in Focused Explorer Lite",
+        "icon": "$(target)"
+      },
+      {
+        "command": "focusedExplorerLite.focusContext",
+        "title": "Focus on Folder"
+      },
+      {
+        "command": "focusedExplorerLite.up",
+        "title": "Go to Parent Folder",
+        "icon": "$(arrow-up)"
+      },
+      {
+        "command": "focusedExplorerLite.reset",
+        "title": "Show Workspace Roots",
+        "icon": "$(home)"
+      },
+      {
+        "command": "focusedExplorerLite.refresh",
+        "title": "Refresh Focused Explorer",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "focusedExplorerLite.settings",
+        "title": "Configure Hidden Files",
+        "icon": "$(filter)"
+      },
+      {
+        "command": "focusedExplorerLite.createFile",
+        "title": "New File...",
+        "icon": "$(new-file)"
+      },
+      {
+        "command": "focusedExplorerLite.createFolder",
+        "title": "New Folder...",
+        "icon": "$(new-folder)"
+      },
+      {
+        "command": "focusedExplorerLite.rename",
+        "title": "Rename...",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "focusedExplorerLite.delete",
+        "title": "Delete...",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "focusedExplorerLite.showInOS",
+        "title": "Reveal in File Explorer",
+        "icon": "$(folder-opened)"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "focusedExplorerLite.focus",
+          "when": "explorerResourceIsFolder",
+          "group": "navigation@50"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "focusedExplorerLite.focus",
+          "when": "view == focusedExplorerLite.view && viewItem == folder",
+          "group": "inline@1"
+        },
+        {
+          "command": "focusedExplorerLite.focusContext",
+          "when": "view == focusedExplorerLite.view && viewItem == folder",
+          "group": "navigation@1"
+        },
+        {
+          "command": "focusedExplorerLite.createFile",
+          "when": "view == focusedExplorerLite.view && viewItem == folder",
+          "group": "1_create@1"
+        },
+        {
+          "command": "focusedExplorerLite.createFolder",
+          "when": "view == focusedExplorerLite.view && viewItem == folder",
+          "group": "1_create@2"
+        },
+        {
+          "command": "focusedExplorerLite.showInOS",
+          "when": "view == focusedExplorerLite.view && (viewItem == folder || viewItem == file)",
+          "group": "2_manage@1"
+        },
+        {
+          "command": "focusedExplorerLite.rename",
+          "when": "view == focusedExplorerLite.view && (viewItem == folder || viewItem == file)",
+          "group": "2_manage@2"
+        },
+        {
+          "command": "focusedExplorerLite.delete",
+          "when": "view == focusedExplorerLite.view && (viewItem == folder || viewItem == file)",
+          "group": "2_manage@3"
+        },
+        {
+          "command": "focusedExplorerLite.createFile",
+          "when": "view == focusedExplorerLite.view && viewItem == file",
+          "group": "1_create@1"
+        },
+        {
+          "command": "focusedExplorerLite.createFolder",
+          "when": "view == focusedExplorerLite.view && viewItem == file",
+          "group": "1_create@2"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "focusedExplorerLite.up",
+          "when": "view == focusedExplorerLite.view",
+          "group": "navigation@1"
+        },
+        {
+          "command": "focusedExplorerLite.reset",
+          "when": "view == focusedExplorerLite.view",
+          "group": "navigation@2"
+        },
+        {
+          "command": "focusedExplorerLite.refresh",
+          "when": "view == focusedExplorerLite.view",
+          "group": "navigation@3"
+        },
+        {
+          "command": "focusedExplorerLite.settings",
+          "when": "view == focusedExplorerLite.view",
+          "group": "navigation@4"
+        },
+        {
+          "command": "focusedExplorerLite.createFile",
+          "when": "view == focusedExplorerLite.view",
+          "group": "navigation@5"
+        },
+        {
+          "command": "focusedExplorerLite.createFolder",
+          "when": "view == focusedExplorerLite.view",
+          "group": "navigation@6"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Focused Explorer Lite",
+      "properties": {
+        "focusedExplorerLite.showHidden": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show dotfiles unless excluded by a pattern."
+        },
+        "focusedExplorerLite.hide": {
+          "type": "array",
+          "default": [
+            "*.meta",
+            ".git",
+            "node_modules"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "description": "File and folder names never shown. Add names (e.g. .git) or wildcards (e.g. *.meta, **/*.json). Only affects this explorer view."
+        }
+      }
+    }
+  }
+}
