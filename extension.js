@@ -194,8 +194,17 @@ async function create(provider, arg, folder) {
   const uri = vscode.Uri.joinPath(destination, name);
   try {
     if (await exists(uri)) return void vscode.window.showWarningMessage(`Existiert bereits: ${name}`);
-    if (folder) await vscode.workspace.fs.createDirectory(uri);
-    else await vscode.workspace.fs.writeFile(uri, new Uint8Array());
+    // Use a WorkspaceEdit so VS Code announces file creation to language services
+    // and other extensions through its normal workspace file-operation events.
+    const edit = new vscode.WorkspaceEdit();
+    if (!folder) edit.createFile(uri, { overwrite: false, ignoreIfExists: false });
+    if (folder) {
+      // WorkspaceEdit has no createDirectory API; directory creation uses workspace.fs.
+      await vscode.workspace.fs.createDirectory(uri);
+    } else {
+      const applied = await vscode.workspace.applyEdit(edit);
+      if (!applied) throw new Error('VS Code konnte die Datei nicht erstellen.');
+    }
     provider.refresh();
     if (!folder) await vscode.window.showTextDocument(uri);
   } catch (err) { vscode.window.showErrorMessage(`Erstellen fehlgeschlagen: ${err.message}`); }
