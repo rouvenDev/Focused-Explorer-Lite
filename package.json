@@ -2,7 +2,7 @@
   "name": "focused-explorer-lite",
   "displayName": "Focused Explorer Lite",
   "description": "Focused file explorer with file filters, context actions and toolbar creation. AI-generated with ChatGPT.",
-  "version": "0.3.7",
+  "version": "0.3.9",
   "publisher": "localtools",
   "license": "UNLICENSED",
   "engines": {
@@ -190,6 +190,11 @@
             "type": "string"
           },
           "description": "File and folder names never shown. Add names (e.g. .git) or wildcards (e.g. *.meta, **/*.json). Only affects this explorer view."
+        },
+        "focusedExplorerLite.autoReveal": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically expand parent folders, scroll to, and select the active editor file when it is inside the displayed folder and not excluded. Does not change the current folder focus."
         }
       }
     }

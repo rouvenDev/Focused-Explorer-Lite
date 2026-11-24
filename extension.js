@@ -38,6 +38,9 @@ class ExplorerProvider {
     this.focus = undefined;
     this.view = undefined;
     this.refreshHandle = undefined;
+    this.nodes = new Map();
+    this.lastRevealedUri = undefined;
+    this.selectionResetIds = new Map();
     const saved = context.workspaceState.get('focusedExplorerLite.focus');
     if (saved) {
       try {
@@ -105,11 +108,25 @@ class ExplorerProvider {
     });
   }
 
+  nodeFor(uri, type, label) {
+    const key = uri.toString();
+    let node = this.nodes.get(key);
+    if (!node) {
+      node = { uri, type, label };
+      this.nodes.set(key, node);
+    } else {
+      node.type = type;
+      if (label !== undefined) node.label = label;
+    }
+    return node;
+  }
+
   getTreeItem(node) {
     const folder = (node.type & vscode.FileType.Directory) !== 0;
     const item = new vscode.TreeItem(node.uri, folder ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None);
     item.label = node.label || path.posix.basename(node.uri.path);
     item.resourceUri = node.uri;
+    item.id = node.uri.toString() + (this.selectionResetIds.get(node.uri.toString()) || '');
     item.contextValue = folder ? 'folder' : 'file';
     item.tooltip = node.uri.fsPath;
     if (!folder) item.command = { command: 'vscode.open', title: 'Open File', arguments: [node.uri] };
@@ -118,12 +135,12 @@ class ExplorerProvider {
 
   async getChildren(node) {
     if (!node && !this.focus) {
-      return this.workspaces.map(w => ({ uri: w.uri, label: w.name, type: vscode.FileType.Directory }));
+      return this.workspaces.map(w => this.nodeFor(w.uri, vscode.FileType.Directory, w.name));
     }
     const uri = node ? node.uri : this.focus;
     try {
       const entries = await vscode.workspace.fs.readDirectory(uri);
-      const children = entries.map(([name, type]) => ({ uri: vscode.Uri.joinPath(uri, name), label: name, type }))
+      const children = entries.map(([name, type]) => this.nodeFor(vscode.Uri.joinPath(uri, name), type, name))
         .filter(item => !this.shouldHide(item.uri))
         .sort((a, b) => {
           const af = (a.type & vscode.FileType.Directory) !== 0;
@@ -141,9 +158,44 @@ class ExplorerProvider {
     const uri = node.uri;
     if (this.focus && uri.toString() === this.focus.toString()) return undefined;
     const parent = parentUri(uri);
+    // The focused folder is a virtual root: it is not itself a rendered tree item.
+    // Its direct children therefore have no parent in this view.
+    if (this.focus && parent.toString() === this.focus.toString()) return undefined;
     if (this.focus && !descendantOrSame(this.focus, parent)) return undefined;
     if (!this.focus && this.workspaces.some(w => w.uri.toString() === uri.toString())) return undefined;
-    return { uri: parent, type: vscode.FileType.Directory };
+    return this.nodeFor(parent, vscode.FileType.Directory);
+  }
+
+  // Only reveal files that can really be reached in the current tree.
+  // An excluded parent folder prevents the file from appearing, even if
+  // the file itself is not excluded.
+  isVisibleFile(uri) {
+    if (uri.scheme !== 'file' || !this.isWithinWorkspace(uri)) return false;
+    const root = this.focus || this.workspaces.find(w => descendantOrSame(w.uri, uri))?.uri;
+    if (!root || !descendantOrSame(root, uri)) return false;
+    let current = uri;
+    while (current.toString() !== root.toString()) {
+      if (this.shouldHide(current)) return false;
+      const parent = parentUri(current);
+      if (parent.toString() === current.toString()) return false;
+      current = parent;
+    }
+    return true;
+  }
+
+  // TreeView.selection is read-only: invalidate the previously selected item's
+  // ID so VS Code removes its stale selection without moving the folder focus.
+  clearRevealedSelection() {
+    if (!this.lastRevealedUri) return;
+    const uri = this.lastRevealedUri;
+    this.lastRevealedUri = undefined;
+    const key = uri.toString();
+    this.selectionResetIds.set(key, `#selection-reset-${Date.now()}-${this.selectionResetIds.size}`);
+    const parent = parentUri(uri);
+    // Rebuild the affected parent, preserving unrelated expanded branches.
+    // For a direct child of the focused root, refresh that virtual root.
+    if (this.focus && parent.toString() === this.focus.toString()) this.refresh();
+    else this.emitter.fire(this.nodeFor(parent, vscode.FileType.Directory));
   }
 
   dispose() {
@@ -279,6 +331,48 @@ function activate(context) {
     const uri = uriFromItem(arg);
     if (uri) await vscode.commands.executeCommand('revealFileInOS', uri);
   });
+
+  // Keep the active editor selected in our custom tree, just like VS Code's
+  // native Explorer (without changing the focused directory).
+  let revealVersion = 0;
+  async function revealActiveFile(editor = vscode.window.activeTextEditor) {
+    const version = ++revealVersion;
+    if (!vscode.workspace.getConfiguration('focusedExplorerLite').get('autoReveal', true)) {
+      provider.clearRevealedSelection();
+      return;
+    }
+    if (!provider.view || !provider.view.visible) return;
+    const uri = editor?.document.uri;
+    if (!uri || !provider.isVisibleFile(uri)) {
+      provider.clearRevealedSelection();
+      return;
+    }
+    try {
+      // getParent supplies the tree hierarchy so reveal() expands all ancestors.
+      // `select` gives the file the native selected-row highlight; `focus: false`
+      // avoids taking keyboard focus away from the editor.
+      if (version !== revealVersion) return;
+      await view.reveal(provider.nodeFor(uri, vscode.FileType.File), {
+        select: true, focus: false, expand: false
+      });
+      if (version === revealVersion) provider.lastRevealedUri = uri;
+    } catch (_) {
+      // The tree may have refreshed, the editor may have changed, or the file
+      // may have been removed while the reveal was running. Ignore gracefully.
+    }
+  }
+  context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(editor => {
+    void revealActiveFile(editor);
+  }));
+  context.subscriptions.push(view.onDidChangeVisibility(e => {
+    if (e.visible) void revealActiveFile();
+  }));
+  // Re-evaluate selection when the focused directory or hide rules change.
+  context.subscriptions.push(provider.onDidChangeTreeData(() => {
+    // Schedule only after the view gets the refresh notification.
+    void revealActiveFile();
+  }));
+  void revealActiveFile();
 
   const watcher = vscode.workspace.createFileSystemWatcher('**/*');
   context.subscriptions.push(watcher);

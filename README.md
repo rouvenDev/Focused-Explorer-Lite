@@ -1,4 +1,4 @@
-# Focused Explorer Lite v0.3.7
+# Focused Explorer Lite v0.3.9
 
 A lightweight, separate file explorer for Visual Studio Code. Focus on the folder you are working in while keeping your **full workspace and C# project tooling** open. Particularly useful for Unity projects.
 
@@ -6,7 +6,7 @@ A lightweight, separate file explorer for Visual Studio Code. Focus on the folde
 
 ## Installation
 
-1. Download `focused-explorer-lite-0.3.7.vsix` from the GitHub release assets.
+1. Download `focused-explorer-lite-0.3.9.vsix` from the GitHub release assets.
 2. In VS Code, open **Extensions** (`Ctrl+Shift+X`).
 3. Open the `...` menu and select **Install from VSIX...**.
 4. Choose the VSIX and reload the editor if prompted.
@@ -20,6 +20,15 @@ The extension does **not** replace or reopen your Unity workspace. It provides a
 - The toolbar offers **Go to Parent Folder**, **Show Workspace Roots**, **Refresh**, **Configure Hidden Files**, **New File**, and **New Folder**.
 - When a folder is focused, `Focus: <folder name>` is displayed **above the file list**; only the folder name is shown, not the full path.
 - Click a file to open it in the normal VS Code editor.
+
+## Auto Reveal (new in v0.3.9)
+
+The custom explorer automatically follows the **active editor**: it expands the containing folder hierarchy, scrolls to the file, and selects/highlights that file in the tree. The editor keeps keyboard focus.
+
+- Open VS Code Settings (`Ctrl+,`) and search for **Focused Explorer Lite: Auto Reveal** to enable or disable it (enabled by default).
+- If the opened file is outside the currently focused folder, the explorer **does not change focus** and clears the previously highlighted file in the custom tree.
+- If the file or any parent folder is excluded by **Hide**, it stays excluded and won't be revealed.
+- Auto Reveal works on local files in an open workspace; non-file editors such as settings and untitled documents are ignored.
 
 ## Exclude files and folders
 
@@ -47,6 +56,19 @@ Right-click a file or folder to access the supported operations:
 - **Focus on Folder** — available for folders; the target icon remains as a shortcut.
 
 The **New File** and **New Folder** toolbar buttons create in the current focused directory. If no folder is focused and multiple workspace roots exist, you can choose a destination.
+
+## Changes in v0.3.9
+
+- Clears the stale Auto Reveal highlight when the active editor is outside the focused folder, is excluded, or is not a workspace file.
+- Keeps the focused folder and expanded unrelated branches unchanged.
+
+## Previous changes (v0.3.8)
+
+- Added automatic reveal and selected-row highlighting for the active editor file.
+- Added **Auto Reveal** setting (enabled by default).
+- Expands containing folder hierarchy while respecting focused roots and excluded files/folders.
+- Corrected `getParent` handling at the focused root so the hierarchy resolves correctly.
+- Keeps all file-creation and management changes from v0.3.7.
 
 ## Changes in v0.3.7 (based on v0.3.4)
 
